@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objs as go
+
 from datetime import date
 
 # Initialize session state for milk_data
@@ -16,23 +16,7 @@ st.title('Milk Production Tracker')
 def update_table():
     st.dataframe(st.session_state.milk_data)
 
-# Function to generate the plot
-def plot_milk_production():
-    fig = go.Figure()
-    for cow_name in st.session_state.milk_data['Cow Name'].unique():
-        cow_data = st.session_state.milk_data[st.session_state.milk_data['Cow Name'] == cow_name]
-        fig.add_trace(go.Scatter(x=cow_data['Date'], y=cow_data['Morning'], mode='lines+markers', name=f'{cow_name} - Morning', line=dict(dash='dash')))
-        fig.add_trace(go.Scatter(x=cow_data['Date'], y=cow_data['Noon'], mode='lines+markers', name=f'{cow_name} - Noon', line=dict(dash='dot')))
-        fig.add_trace(go.Scatter(x=cow_data['Date'], y=cow_data['Evening'], mode='lines+markers', name=f'{cow_name} - Evening', line=dict(dash='solid')))
-    fig.update_layout(title='Milk Production Over Time',
-                      xaxis_title='Date',
-                      yaxis_title='Milk Production (L)')
-    return fig
 
-# Function to update the plot
-def update_plot():
-    milk_plot = plot_milk_production()
-    st.plotly_chart(milk_plot)
 
 # Create interactive widgets
 date_picker = st.date_input('Date', value=date.today())
@@ -95,7 +79,6 @@ if delete_button:
 
 # Display the DataFrame and plot
 update_table()
-update_plot()
 
 # Custom CSS for button colors
 st.markdown("""
