@@ -111,6 +111,7 @@ with col3:
 
 # Display the DataFrame below the dashboard tiles
 update_table(filtered_data)
+
 # Create interactive widgets
 selected_index = st.selectbox(
     'Select Record to Edit/Delete',
@@ -127,6 +128,10 @@ evening_input = st.number_input('Evening Production (L)', step=0.1)
 col1, col2, col3 = st.columns(3)
 with col1:
     add_button = st.button('Add Record', key='add_button')
+
+# Debugging print to check the user role
+st.write(f"User role: {st.session_state.user_role}")
+
 if st.session_state.user_role in ['Manager', 'Admin']:
     with col2:
         edit_button = st.button('Edit Record', key='edit_button')
@@ -174,7 +179,6 @@ def delete_record():
     if selected_index is not None:
         st.session_state.milk_data = st.session_state.milk_data.drop(selected_index).reset_index(drop=True)
         st.session_state.milk_data['Date'] = pd.to_datetime(st.session_state.milk_data['Date'])  # Ensure Date column is datetime
-        st.session_state.milk_data.to_csv('milk_production.csv', index=False)  # Save to CSV
         st.success('Successfully Deleted!')
         st.rerun()  # Refresh the page
 
@@ -188,6 +192,12 @@ if st.session_state.user_role in ['Manager', 'Admin']:
     if delete_button:
         delete_record()
 
+# Create bar chart for total milk production over time
+st.bar_chart(filtered_data.set_index('Date')['Total'])
+
+# Create line chart for milk production over time for each cow
+line_chart_data = filtered_data.pivot(index='Date', columns='Cow Name', values='Total')
+st.line_chart(line_chart_data)
 # Create bar chart for total milk production over time
 st.bar_chart(filtered_data.set_index('Date')['Total'])
 

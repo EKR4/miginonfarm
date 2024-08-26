@@ -1,14 +1,46 @@
 import streamlit as st
 import os
+import pandas as pd
 from form.login import login, logout
+from form.signup import signup
+from form.settings import settings
+from streamlit_autorefresh import st_autorefresh
 
-# Initialize session state for user_role, logged_in, and page
+# Initialize session state for user_role, logged_in, page, and users
 if 'user_role' not in st.session_state:
     st.session_state.user_role = None
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'page' not in st.session_state:
     st.session_state.page = None
+if 'users' not in st.session_state:
+    if os.path.exists('users.csv'):
+        try:
+            st.session_state.users = pd.read_csv('users.csv').to_dict('records')
+        except pd.errors.EmptyDataError:
+            st.session_state.users = []
+            # Create the users.csv file with the appropriate columns if it doesn't exist or is empty
+            df = pd.DataFrame(columns=['username', 'password', 'role', 'name', 'phone_number'])
+            df.to_csv('users.csv', index=False)
+    else:
+        st.session_state.users = []
+        # Create the users.csv file with the appropriate columns if it doesn't exist
+        df = pd.DataFrame(columns=['username', 'password', 'role', 'name', 'phone_number'])
+        df.to_csv('users.csv', index=False)
+
+# Auto-refresh every 60 seconds
+count = st_autorefresh(interval=60000, limit=100, key="refresh")
+
+# Check for inactivity
+if 'last_active' not in st.session_state:
+    st.session_state.last_active = count
+
+if st.session_state.logged_in:
+    if count - st.session_state.last_active > 3:
+        st.session_state.logged_in = False
+        st.session_state.user_role = None
+        st.session_state.page = None
+        st.success('Logged out due to inactivity')
 
 # --- PAGE SETUP ---
 milk_page = st.Page(
@@ -37,14 +69,18 @@ cattle_page = st.Page(
     title="Cattle",
     icon=":material/agriculture:",
 )
-# --- NAVIGATION SETUP [WITHOUT SECTIONS] ---
-# pg = st.navigation(pages=[about_page, project_1_page, project_2_page])
+settings_page = st.Page(
+    "form/settings.py",
+    title="Settings",
+    icon=":material/settings:",
+)
 
 # --- NAVIGATION SETUP [WITH SECTIONS]---
 pg = st.navigation(
     {
         "Milk": [milk_page],
         "Admin": [sales_page, inventory_page, workers_page, cattle_page],
+        "Settings": [settings_page],
     }
 )
 
@@ -58,9 +94,17 @@ st.sidebar.markdown("Made with Prescison")
 
 # --- LOGIN/LOGOUT ---
 if not st.session_state.logged_in:
-    login()
+    if st.session_state.page == 'Signup':
+        signup()
+    else:
+        login()
+        if st.sidebar.button('Create an Account', key='create_account_button'):
+            st.session_state.page = 'Signup'
+            st.rerun()  # Force a rerun of the script
 else:
     st.sidebar.button('Logout', on_click=logout)
     # --- RUN NAVIGATION ---
     if st.session_state.page == 'Milk Production Tracker':
         pg.run()
+    elif st.session_state.page == 'Settings':
+        settings()
