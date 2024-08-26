@@ -78,44 +78,45 @@ total_milk_produced = get_total_milk_produced(filtered_data)
 overall_total_milk_produced = get_overall_total_milk_produced()
 
 col1, col2, col3 = st.columns(3)
-  
 with col1:
     try:
         st.markdown(f"""
-        <div style="border: 2px solid #e44b8d; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
-            <h4>Highest Milk Producer</h4>
-            <p style='color: #e44b8d'>{highest_producer if highest_producer else 'N/A'} : {highest_production:.2f} L</p>
-        </div>
-    """, unsafe_allow_html=True)
-
+            <div style="border: 2px solid #e44b8d; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+                <h4>Highest Milk Producer</h4>
+                <p style='color: #e44b8d'>{highest_producer if highest_producer else 'N/A'} : {highest_production:.2f} L</p>
+            </div>
+        """, unsafe_allow_html=True)
     except TypeError as e:
         st.error(f"Error in displaying highest producer: {e}")
 with col2:
     try:
-         st.markdown(f"""
-        <div style="border: 2px solid #e44b8d; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
-            <h4 style="font-size: 23.6px;">Total Milk Produced (Start-End Date)</h4>
-            <p style='color: #e69b00'>{total_milk_produced:.2f} L</p>
-        </div>
-    """, unsafe_allow_html=True)
+        st.markdown(f"""
+            <div style="border: 2px solid #e44b8d; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+                <h4 style="font-size: 23.6px;">Total Milk Produced (Start-End Date)</h4>
+                <p style='color: #e69b00'>{total_milk_produced:.2f} L</p>
+            </div>
+        """, unsafe_allow_html=True)
     except TypeError as e:
         st.error(f"Error in displaying total milk produced: {e}")
 with col3:
     try:
         st.markdown(f"""
-        <div style="border: 2px solid #e44b8d; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
-            <h4>Overall Total Milk Produced</h4>
-            <p style='color: #3b8132'>{overall_total_milk_produced:.2f} L</p>
-        </div>
-    """, unsafe_allow_html=True)
+            <div style="border: 2px solid #e44b8d; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+                <h4>Overall Total Milk Produced</h4>
+                <p style='color: #3b8132'>{overall_total_milk_produced:.2f} L</p>
+            </div>
+        """, unsafe_allow_html=True)
     except TypeError as e:
         st.error(f"Error in displaying overall total milk produced: {e}")
 
-
 # Display the DataFrame below the dashboard tiles
 update_table(filtered_data)
-
 # Create interactive widgets
+selected_index = st.selectbox(
+    'Select Record to Edit/Delete',
+    options=[None] + list(filtered_data.index),
+    format_func=lambda x: 'No selection' if x is None else x
+)
 input_date = st.date_input('Input Date', value=date.today())
 cow_name_input = st.text_input('Cow Name')
 morning_input = st.number_input('Morning Production (L)', step=0.1)
@@ -126,17 +127,17 @@ evening_input = st.number_input('Evening Production (L)', step=0.1)
 col1, col2, col3 = st.columns(3)
 with col1:
     add_button = st.button('Add Record', key='add_button')
-with col2:
-    edit_button = st.button('Edit Record', key='edit_button')
-with col3:
-    delete_button = st.button('Delete Record', key='delete_button')
-
-# Show the selected index widget only when edit or delete button is clicked
-if edit_button or delete_button:
-    selected_index = st.selectbox('Select Record to Edit/Delete', st.session_state.milk_data.index)
+if st.session_state.user_role in ['Manager', 'Admin']:
+    with col2:
+        edit_button = st.button('Edit Record', key='edit_button')
+    with col3:
+        delete_button = st.button('Delete Record', key='delete_button')
 
 # Function to add a new record to the DataFrame
 def add_record():
+    if not cow_name_input:
+        st.error('Cow Name cannot be empty')
+        return
     new_record = pd.DataFrame({
         'Date': [input_date],
         'Cow Name': [cow_name_input],
@@ -148,37 +149,44 @@ def add_record():
     st.session_state.milk_data = pd.concat([st.session_state.milk_data, new_record], ignore_index=True)
     st.session_state.milk_data['Date'] = pd.to_datetime(st.session_state.milk_data['Date'])  # Ensure Date column is datetime
     st.session_state.milk_data.to_csv('milk_production.csv', index=False)  # Save to CSV
-    st.success('Successfully added!')
+    st.success('Successfully Added!')
     st.rerun()  # Refresh the page
 
 # Function to edit a selected record in the DataFrame
 def edit_record():
-    st.session_state.milk_data.at[selected_index, 'Date'] = input_date
-    st.session_state.milk_data.at[selected_index, 'Cow Name'] = cow_name_input
-    st.session_state.milk_data.at[selected_index, 'Morning'] = morning_input
-    st.session_state.milk_data.at[selected_index, 'Noon'] = noon_input
-    st.session_state.milk_data.at[selected_index, 'Evening'] = evening_input
-    st.session_state.milk_data.at[selected_index, 'Total'] = morning_input + noon_input + evening_input
-    st.session_state.milk_data['Date'] = pd.to_datetime(st.session_state.milk_data['Date'])  # Ensure Date column is datetime
-    st.session_state.milk_data.to_csv('milk_production.csv', index=False)  # Save to CSV
-    st.rerun()  # Refresh the page
+    if not cow_name_input:
+        st.error('Cow Name cannot be empty')
+        return
+    if selected_index is not None:
+        st.session_state.milk_data.at[selected_index, 'Date'] = input_date
+        st.session_state.milk_data.at[selected_index, 'Cow Name'] = cow_name_input
+        st.session_state.milk_data.at[selected_index, 'Morning'] = morning_input
+        st.session_state.milk_data.at[selected_index, 'Noon'] = noon_input
+        st.session_state.milk_data.at[selected_index, 'Evening'] = evening_input
+        st.session_state.milk_data.at[selected_index, 'Total'] = morning_input + noon_input + evening_input
+        st.session_state.milk_data['Date'] = pd.to_datetime(st.session_state.milk_data['Date'])  # Ensure Date column is datetime
+        st.session_state.milk_data.to_csv('milk_production.csv', index=False)  # Save to CSV
+        st.success('Successfully Edited!')
+        st.rerun()  # Refresh the page
 
 # Function to delete a selected record from the DataFrame
 def delete_record():
-    st.session_state.milk_data = st.session_state.milk_data.drop(selected_index).reset_index(drop=True)
-    st.session_state.milk_data['Date'] = pd.to_datetime(st.session_state.milk_data['Date'])  # Ensure Date column is datetime
-    st.session_state.milk_data.to_csv('milk_production.csv', index=False)  # Save to CSV
-    st.rerun()  # Refresh the page
+    if selected_index is not None:
+        st.session_state.milk_data = st.session_state.milk_data.drop(selected_index).reset_index(drop=True)
+        st.session_state.milk_data['Date'] = pd.to_datetime(st.session_state.milk_data['Date'])  # Ensure Date column is datetime
+        st.session_state.milk_data.to_csv('milk_production.csv', index=False)  # Save to CSV
+        st.success('Successfully Deleted!')
+        st.rerun()  # Refresh the page
 
 # Handle button clicks
 if add_button:
     add_record()
 
-if edit_button:
-    edit_record()
-
-if delete_button:
-    delete_record()
+if st.session_state.user_role in ['Manager', 'Admin']:
+    if edit_button:
+        edit_record()
+    if delete_button:
+        delete_record()
 
 # Create bar chart for total milk production over time
 st.bar_chart(filtered_data.set_index('Date')['Total'])
@@ -186,17 +194,3 @@ st.bar_chart(filtered_data.set_index('Date')['Total'])
 # Create line chart for milk production over time for each cow
 line_chart_data = filtered_data.pivot(index='Date', columns='Cow Name', values='Total')
 st.line_chart(line_chart_data)
-
-# Custom CSS for button colors
-st.markdown("""
-    <style>
-    .stButton > button[data-testid="edit_button"] {
-        background-color: #FFD700; /* Yellow */
-        color: black;
-    }
-    .stButton > button[data-testid="delete_button"] {
-        background-color: #FF0000; /* Red */
-        color: white.
-    }
-    </style>
-    """, unsafe_allow_html=True)

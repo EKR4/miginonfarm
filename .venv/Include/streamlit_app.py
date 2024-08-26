@@ -1,5 +1,14 @@
 import streamlit as st
 import os
+from form.login import login, logout
+
+# Initialize session state for user_role, logged_in, and page
+if 'user_role' not in st.session_state:
+    st.session_state.user_role = None
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+if 'page' not in st.session_state:
+    st.session_state.page = None
 
 # --- PAGE SETUP ---
 milk_page = st.Page(
@@ -39,7 +48,6 @@ pg = st.navigation(
     }
 )
 
-
 # --- SHARED ON ALL PAGES ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 image_path = os.path.join(current_dir, 'assets', 'logo.png')
@@ -48,6 +56,11 @@ st.logo(image_path)
 #st.image(image_path_2, width=100)# Adjust the width as needed
 st.sidebar.markdown("Made with Prescison")
 
-
-# --- RUN NAVIGATION ---
-pg.run()
+# --- LOGIN/LOGOUT ---
+if not st.session_state.logged_in:
+    login()
+else:
+    st.sidebar.button('Logout', on_click=logout)
+    # --- RUN NAVIGATION ---
+    if st.session_state.page == 'Milk Production Tracker':
+        pg.run()
