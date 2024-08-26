@@ -29,7 +29,7 @@ def save_users_to_csv():
 
 def login():
     st.title('Login')
-    username = st.text_input('Username', key='login_username')
+    username = st.text_input('Username', key='log_username')
     password = st.text_input('Password', type='password', key='login_password')
     role = st.selectbox('Role', ['Worker', 'Manager', 'Admin'], key='login_role')
     login_button = st.button('Login', key='login_button')

@@ -90,7 +90,7 @@ image_path = os.path.join(current_dir, 'assets', 'logo.png')
 image_path_2 = os.path.join(current_dir, 'assets', 'logo.png')
 st.logo(image_path)  
 #st.image(image_path_2, width=100)# Adjust the width as needed
-st.sidebar.markdown("Made with Prescison")
+st.sidebar.markdown("Made with Prescision")
 
 # --- LOGIN/LOGOUT ---
 if not st.session_state.logged_in:
