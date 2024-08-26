@@ -1,21 +1,18 @@
 {
     "builds": [
       {
-        "src": ".venv/Include/streamlit_app.py",
+        "src": "server.py",
         "use": "@vercel/python",
         "config": {
-          "pythonVersion": "3.9"
+          "pythonVersion": "3.10"
         }
       }
     ],
     "routes": [
       {
         "src": "/(.*)",
-        "dest": ".venv/Include/streamlit_app.py"
+        "dest": "server.py"
       }
-    ],
-    "env": {
-      "PYTHONPATH": ".venv/Scripts/python"
-    }
+    ]
   }
   
