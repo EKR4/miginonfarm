@@ -1,0 +1,18 @@
+{
+    "builds": [
+      {
+        "src": "Include/streamlit_app.py",
+        "use": "@vercel/python",
+        "config": {
+          "pythonVersion": "3.9"
+        }
+      }
+    ],
+    "routes": [
+      {
+        "src": "/(.*)",
+        "dest": "Include/streamlit_app.py"
+      }
+    ]
+  }
+  
